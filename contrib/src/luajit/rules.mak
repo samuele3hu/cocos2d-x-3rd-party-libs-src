@@ -1,14 +1,14 @@
 # luajit
 
-LUAJIT_VERSION := 2.0.1
-LUAJIT_URL := http://luajit.org/download/LuaJIT-$(LUAJIT_VERSION).tar.gz
+LUAJIT_VERSION := 2.1
+LUAJIT_URL := https://github.com/samuele3hu/luajit2.git
 
-$(TARBALLS)/luajit-$(LUAJIT_VERSION).tar.gz:
-	$(call download,$(LUAJIT_URL))
+$(TARBALLS)/luajit-$(LUAJIT_VERSION).tar.xz:
+	$(call download_git,$(LUAJIT_URL), v2.1-agentzh)
 
-.sum-luajit: luajit-$(LUAJIT_VERSION).tar.gz
 
-luajit: luajit-$(LUAJIT_VERSION).tar.gz .sum-luajit
+
+luajit: luajit-$(LUAJIT_VERSION).tar.xz
 	$(UNPACK)
 ifeq ($(LUAJIT_VERSION),2.0.1)
 	$(APPLY) $(SRC)/luajit/v2.0.1_hotfix1.patch
@@ -25,6 +25,11 @@ endif
 ifeq ($(MY_TARGET_ARCH),armv7s)
 LUAJIT_TARGET_FLAGS="-arch armv7s -isysroot $(IOS_SDK) $(OPTIM)"
 LUAJIT_HOST_CC="gcc -m32 -arch i386"
+endif
+
+ifeq ($(MY_TARGET_ARCH),arm64)
+LUAJIT_TARGET_FLAGS="-arch arm64 -isysroot $(IOS_SDK) $(OPTIM)"
+LUAJIT_HOST_CC="gcc -m64 -arch x86_64"
 endif
 endif #endof HAVE_IOS
 
@@ -52,6 +57,9 @@ ifeq ($(MY_TARGET_ARCH),armv7s)
 endif
 ifeq ($(MY_TARGET_ARCH),i386)
 	cd $< && make CC="gcc -m32 -arch i386 $(OPTIM)"
+endif
+ifeq ($(MY_TARGET_ARCH),arm64)
+	cd $< && make HOST_CC=$(LUAJIT_HOST_CC) TARGET_FLAGS=$(LUAJIT_TARGET_FLAGS) TARGET=arm TARGET_SYS=iOS
 endif
 endif
 	cd $< && make install PREFIX=$(PREFIX)
